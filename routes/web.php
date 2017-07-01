@@ -22,7 +22,7 @@ Route::group(['prefix' => 'api/v1'], function(){
     ]);
 
     Route::resource('meeting/registration', 'RegistrationController',[
-        'except' => ['store','destroy']
+        'only' => ['store','destroy']
     ]);
 
     Route::post('user', [
