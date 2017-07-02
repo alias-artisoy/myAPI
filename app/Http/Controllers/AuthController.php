@@ -39,8 +39,7 @@ class AuthController extends Controller
         }
 
         $response = [
-            'msg' => 'An error occurred.',
-            'user' => $user
+            'msg' => 'An error occurred.'
         ];
         return response()->json($response, 404);
     }
