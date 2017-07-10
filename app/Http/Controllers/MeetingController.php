@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Meeting;
 use Illuminate\Http\Request;
+use JWTAuth;
 
 class MeetingController extends Controller
 {
     public function __construct(){
-        // $this->middleware('name');
+        $this->middleware('jwt.auth',['only' => [
+            'update','store','destroy'
+        ]]);
     }
     /**
      * Display a listing of the resource.
@@ -45,14 +48,17 @@ class MeetingController extends Controller
         $this->validate($request,[
             'title' => 'required',
             'description' => 'required',
-            'time' => 'required|date_format:YmdHie',
-            'user_id' => 'required'
+            'time' => 'required|date_format:YmdHie'
         ]);
+
+        if(!$user = JWTAuth::parseToken()->authenticate()){
+            return response()->json(['msg' => 'User not found.'],404);
+        }
 
         $title = $request->input('title');
         $description = $request->input('description');
         $time = $request->input('time');
-        $user_id =$request->input('user_id');
+        $user_id = $user->id;
 
         $meeting = new Meeting([
             'time' => Carbon::createFromFormat('YmdHie', $time),
@@ -111,14 +117,17 @@ class MeetingController extends Controller
         $this->validate($request,[
             'title' => 'required',
             'description' => 'required',
-            'time' => 'required|date_format:YmdHie',
-            'user_id' => 'required'
+            'time' => 'required|date_format:YmdHie'
         ]);
+
+        if(!$user = JWTAuth::parseToken()->authenticate()){
+            return response()->json(['msg' => 'User not found.'],404);
+        }
         
         $title = $request->input('title');
         $description = $request->input('description');
         $time = $request->input('time');
-        $user_id =$request->input('user_id');
+        $user_id = $user->id;
 
         $meeting = [
             'title' => $title,
@@ -165,12 +174,21 @@ class MeetingController extends Controller
     public function destroy($id)
     {
         $meeting = Meeting::findOrFail($id);
+        
+        if(!$user = JWTAuth::parseToken()->authenticate()){
+            return response()->json(['msg' => 'User not found.'],404);
+        }
+
         $users = $meeting->users;
         $meeting->users()->detach();
+
         if(!$meeting->delete()){
              return response()->json(['msg' => 'deletion failed'],200);
         }
         
+        if(!$meeting->users()->where('users.id',$user->id)->first()){
+            return response()->json(['msg' =>  'User not registered for meeting, update not successful', 401]);
+        };
         $response = [
             'msg' => 'Meeting deleted successfully',
             'create' => [

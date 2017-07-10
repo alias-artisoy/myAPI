@@ -30,7 +30,7 @@ Route::group(['prefix' => 'api/v1'], function(){
     ]);
 
     Route::post('user/signin', [
-        'uses' => 'AuthController@store'
+        'uses' => 'AuthController@signin'
     ]);
 
 });
