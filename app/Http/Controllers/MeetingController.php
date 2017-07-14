@@ -178,17 +178,18 @@ class MeetingController extends Controller
         if(!$user = JWTAuth::parseToken()->authenticate()){
             return response()->json(['msg' => 'User not found.'],404);
         }
-
-        $users = $meeting->users;
-        $meeting->users()->detach();
-
-        if(!$meeting->delete()){
-             return response()->json(['msg' => 'deletion failed'],200);
-        }
-        
         if(!$meeting->users()->where('users.id',$user->id)->first()){
             return response()->json(['msg' =>  'User not registered for meeting, update not successful', 401]);
         };
+        $users = $meeting->users;
+        $meeting->users()->detach();
+        if(!$meeting->delete()){
+             foreach($users as $user){
+                $meeting->users()->attach($user);
+             }
+             return response()->json(['msg' => 'deletion failed'],200);
+        }
+        
         $response = [
             'msg' => 'Meeting deleted successfully',
             'create' => [
